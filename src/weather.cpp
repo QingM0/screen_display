@@ -1,4 +1,3 @@
-#include "weather.h"
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include "ArduinoUZlib.h"
@@ -38,44 +37,33 @@ const char *qweather_ca =
     "yOGBQMkKW+ESPMFgKuOXwIlCypTPRpgSabuY0MLTDXJLR27lk8QyKGOHQ+SwMj4K\n"
     "00u/I5sUKUErmgQfky3xxzlIPK1aEn8=\n"
     "-----END CERTIFICATE-----\n";
-const char *url = "https://devapi.qweather.com/v7/weather/now?location=101010100&key=****";
-String getweather()
+const char *url = "https://devapi.qweather.com/v7/weather/now?location=101230110&key=****";
+ArduinoJson::V704PB2::JsonDocument getweather()
 {
     HTTPClient http;
     http.begin(url, qweather_ca);
     http.setTimeout(10000);
-    int httpCode = http.GET();
-    Serial.printf("HTTP 状态码: %d", httpCode);
+    http.GET();
     WiFiClient *stream = http.getStreamPtr();                               // 获取HTTP响应流
     int size = http.getSize();                                              // 获取 HTTP 响应体的大小
+    
     uint8_t inbuff[size];                                                   // 初始化inbuff数组
     stream->readBytes(inbuff, size);                                        // 将http流数据写入inbuff中
     uint8_t *outbuf = NULL;                                                 // 解压后的输出流
     uint32_t outresult = 0;                                                 // 解压后的大小，在调用解压方法后会被赋值。
     int result = ArduinoUZlib::decompress(inbuff, size, outbuf, outresult); // 调用解压函数
-    Serial.write(outbuf, outresult);                                        // 输出解压
-    Serial.println("响应数据\n");
-    Serial.println(outresult);
+    Serial.write(outbuf, outresult);                                        // 输出解压后的数据
+
     http.end();
     String jsonStr = String((char *)outbuf); // 将解压后的数据转换为字符串
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, jsonStr); // 将json字符串转换为json对象
-    if (error)
-    {
-        Serial.print("deserializeJson() failed: ");
-        Serial.println(error.c_str());
-        return "<error>";
-    }
-    String temp = doc["now"]["temp"].as<String>();
-    String obsTime = doc["now"]["obsTime"].as<String>();
-    String windSpeed = doc["now"]["windSpeed"].as<String>();
+    //if (error)
+    //{
+    //    Serial.print("deserializeJson() failed: ");
+    //    Serial.println(error.c_str());
+     //   return "<error>";
+    //}
 
-    Serial.print("\ntemp: ");
-    Serial.println(temp);
-    Serial.print("Observation Time: ");
-    Serial.println(obsTime);
-
-    String combinedData = "current temperature: " + String(temp) + "\ncurrent time: " + String(obsTime) + "\nCurrent wind speed: " + String(windSpeed);
-    ;
-    return combinedData;
+    return doc;
 }
